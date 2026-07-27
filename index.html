@@ -104,18 +104,32 @@ button:hover {
   border: 1px dashed rgba(0,234,255,0.7);
   color: white;
 }
+
+/* Статус сервера */
+#server-status {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.4);
+  backdrop-filter: blur(10px);
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0,255,255,0.4);
+}
 </style>
 </head>
 <body>
 
 <div id="app">
   <h1>AeroChat</h1>
-  <div class="subtitle">Мессенджер</div>
+  <div class="subtitle">Frutiger Aero мессенджер</div>
 
   <input id="name" placeholder="Ваше имя">
   <input id="msg" placeholder="Сообщение">
 
   <button onclick="send()">Отправить</button>
+
+  <div id="server-status">Проверка сервера…</div>
 
   <div id="chat">
     <div class="msg system">
@@ -125,10 +139,10 @@ button:hover {
 </div>
 
 <script>
-// ВСТАВЬ СЮДА URL СВОЕГО PYTHON-СЕРВЕРА, например:
-// const SERVER = "https://mychat.onrender.com";
+// ВСТАВЬ СЮДА URL СВОЕГО PYTHON-СЕРВЕРА
 const SERVER = "https://aero-chat-server.onrender.com";
 
+// Отправка сообщения
 async function send() {
   const name = document.getElementById("name").value.trim();
   const msg = document.getElementById("msg").value.trim();
@@ -147,6 +161,7 @@ async function send() {
   }
 }
 
+// Загрузка сообщений
 async function load() {
   try {
     const r = await fetch(SERVER + "/messages");
@@ -160,12 +175,33 @@ async function load() {
           <b>${escapeHtml(m.name)}:</b> ${escapeHtml(m.msg)}
         </div>
       `).join("");
+  } catch (e) {}
+}
+
+// Проверка сервера
+async function checkServer() {
+  const statusBox = document.getElementById("server-status");
+
+  try {
+    const r = await fetch(SERVER + "/messages");
+
+    if (r.ok) {
+      statusBox.innerHTML = "🟢 Сервер работает";
+      statusBox.style.background = "rgba(0,255,150,0.35)";
+      statusBox.style.boxShadow = "0 0 15px rgba(0,255,150,0.6)";
+    } else {
+      statusBox.innerHTML = "🔴 Сервер не отвечает";
+      statusBox.style.background = "rgba(255,0,0,0.35)";
+      statusBox.style.boxShadow = "0 0 15px rgba(255,0,0,0.6)";
+    }
   } catch (e) {
-    // если сервер не отвечает — просто не трогаем чат
+    statusBox.innerHTML = "🔴 Сервер недоступен";
+    statusBox.style.background = "rgba(255,0,0,0.35)";
+    statusBox.style.boxShadow = "0 0 15px rgba(255,0,0,0.6)";
   }
 }
 
-// простая защита от HTML в сообщениях
+// Защита от HTML
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -173,8 +209,11 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;");
 }
 
-// обновление чата каждую секунду
+// Интервалы
 setInterval(load, 1000);
+setInterval(checkServer, 5000);
+checkServer();
+load();
 </script>
 
 </body>
