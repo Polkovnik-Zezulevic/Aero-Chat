@@ -115,6 +115,7 @@ button:hover {
   font-size: 14px;
   text-align: center;
   box-shadow: 0 0 10px rgba(0,255,255,0.4);
+  transition: 0.3s ease;
 }
 </style>
 </head>
@@ -122,7 +123,7 @@ button:hover {
 
 <div id="app">
   <h1>AeroChat</h1>
-  <div class="subtitle">Frutiger Aero мессенджер</div>
+  <div class="subtitle">Frutiger Aero мессенджер</div>
 
   <input id="name" placeholder="Ваше имя">
   <input id="msg" placeholder="Сообщение">
@@ -139,14 +140,12 @@ button:hover {
 </div>
 
 <script>
-// ВСТАВЬ СЮДА URL СВОЕГО PYTHON-СЕРВЕРА
-const SERVER = "https://aero-chat-server.onrender.com";
+const SERVER = "https://aero-chat-server.onrender.com"; // твой сервер
 
 // Отправка сообщения
 async function send() {
   const name = document.getElementById("name").value.trim();
   const msg = document.getElementById("msg").value.trim();
-
   if (!name || !msg) return;
 
   try {
@@ -166,7 +165,6 @@ async function load() {
   try {
     const r = await fetch(SERVER + "/messages");
     const data = await r.json();
-
     if (!Array.isArray(data)) return;
 
     document.getElementById("chat").innerHTML =
@@ -181,10 +179,8 @@ async function load() {
 // Проверка сервера
 async function checkServer() {
   const statusBox = document.getElementById("server-status");
-
   try {
     const r = await fetch(SERVER + "/messages");
-
     if (r.ok) {
       statusBox.innerHTML = "🟢 Сервер работает";
       statusBox.style.background = "rgba(0,255,150,0.35)";
@@ -194,7 +190,7 @@ async function checkServer() {
       statusBox.style.background = "rgba(255,0,0,0.35)";
       statusBox.style.boxShadow = "0 0 15px rgba(255,0,0,0.6)";
     }
-  } catch (e) {
+  } catch {
     statusBox.innerHTML = "🔴 Сервер недоступен";
     statusBox.style.background = "rgba(255,0,0,0.35)";
     statusBox.style.boxShadow = "0 0 15px rgba(255,0,0,0.6)";
