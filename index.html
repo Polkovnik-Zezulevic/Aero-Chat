@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AeroChat</title>
+
 <style>
 body {
   margin: 0;
@@ -16,7 +17,6 @@ body {
   min-height: 100vh;
 }
 
-/* Контейнер */
 #app {
   width: 420px;
   max-width: 90%;
@@ -29,7 +29,6 @@ body {
   border: 1px solid rgba(255,255,255,0.6);
 }
 
-/* Заголовок */
 h1 {
   text-align: center;
   color: white;
@@ -38,50 +37,33 @@ h1 {
   font-size: 1.8em;
 }
 
-.subtitle {
-  text-align: center;
-  color: rgba(255,255,255,0.8);
-  font-size: 0.9em;
-  margin-bottom: 18px;
-}
-
-/* Поля ввода */
-input {
+input, button {
   width: 100%;
   padding: 12px;
   margin: 6px 0;
   border-radius: 12px;
   border: none;
-  background: rgba(255,255,255,0.75);
   font-size: 1em;
-  outline: none;
-  box-shadow: inset 0 0 8px rgba(0,0,0,0.15);
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-  box-sizing: border-box; /* фиксирует размеры */
+  box-sizing: border-box;
 }
 
-/* Кнопка */
+input {
+  background: rgba(255,255,255,0.75);
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.15);
+}
+
 button {
-  width: 100%;
-  padding: 12px;
   margin-top: 10px;
-  border-radius: 12px;
-  border: none;
   background: linear-gradient(135deg, #00eaff, #7df9ff);
-  color: black;
-  font-size: 1.1em;
   font-weight: bold;
   cursor: pointer;
   box-shadow: 0 0 15px #00eaff;
   transition: 0.2s;
 }
 
-button:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 25px #00eaff;
-}
+button:hover { transform: scale(1.03); }
+button:active { transform: scale(0.98); }
 
-/* Статус сервера */
 #server-status {
   margin-top: 10px;
   padding: 10px;
@@ -91,10 +73,8 @@ button:hover {
   font-size: 0.9em;
   text-align: center;
   box-shadow: 0 0 10px rgba(0,255,255,0.4);
-  transition: 0.3s ease;
 }
 
-/* Поле чата */
 #chat {
   margin-top: 18px;
   max-height: 280px;
@@ -106,7 +86,20 @@ button:hover {
   box-shadow: inset 0 0 25px rgba(0,255,255,0.25);
 }
 
-/* Сообщения */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0,234,255,0.4);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  margin-right: 8px;
+  color: #004b7a;
+  box-shadow: 0 0 6px rgba(0,234,255,0.6);
+}
+
 .msg {
   background: rgba(255,255,255,0.9);
   padding: 10px;
@@ -114,147 +107,147 @@ button:hover {
   border-radius: 12px;
   box-shadow: 0 0 10px rgba(0,255,255,0.3);
   font-size: 0.95em;
+  display: flex;
+  align-items: center;
+  animation: fadeIn 0.25s ease;
 }
 
-.msg b {
-  color: #0077aa;
-}
+.msg b { color: #0077aa; }
 
-/* Системное сообщение */
 .msg.system {
   background: rgba(0,234,255,0.15);
   border: 1px dashed rgba(0,234,255,0.7);
   color: white;
 }
 
-/* Адаптация под телефоны */
-@media (max-width: 480px) {
-  #app {
-    margin: 20px auto;
-    padding: 15px;
-    border-radius: 15px;
-  }
-
-  h1 {
-    font-size: 1.5em;
-  }
-
-  .subtitle {
-    font-size: 0.85em;
-  }
-
-  input, button {
-    font-size: 1em;
-    padding: 10px;
-  }
-
-  #chat {
-    max-height: 200px;
-  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
 </head>
-<body>
 
+<body>
 <div id="app">
   <h1>AeroChat</h1>
 
   <input id="name" placeholder="Ваше имя">
   <input id="msg" placeholder="Сообщение">
-
   <button onclick="send()">Отправить</button>
 
   <div id="server-status">Проверка сервера…</div>
 
   <div id="chat">
-    <div class="msg system">
-      <b>AeroChat:</b> Добро пожаловать! Сообщения появятся здесь.
-    </div>
   </div>
 </div>
 
 <script>
 const SERVER = "https://aero-chat-server.onrender.com";
 
+const nameEl = document.getElementById("name");
+const msgEl = document.getElementById("msg");
+const chat = document.getElementById("chat");
+const statusBox = document.getElementById("server-status");
+
+let lastCount = 0;
+
+// Универсальный запрос
+async function api(path, options = {}) {
+  try {
+    const r = await fetch(SERVER + path, options);
+    return r.ok ? r.json() : null;
+  } catch {
+    return null;
+  }
+}
+
 // Отправка сообщения
 async function send() {
-  const name = document.getElementById("name").value.trim();
-  const msg = document.getElementById("msg").value.trim();
+  const name = nameEl.value.trim();
+  const msg = msgEl.value.trim();
   if (!name || !msg) return;
 
-  try {
-    await fetch(SERVER + "/send", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({name, msg})
-    });
-    document.getElementById("msg").value = "";
-  } catch (e) {
-    console.log("Ошибка отправки:", e);
-  }
+  await api("/send", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ name, msg })
+  });
+
+  msgEl.value = "";
+}
+
+// Рендер сообщения
+function renderMessage({ name, msg }) {
+  const div = document.createElement("div");
+  div.className = "msg";
+  div.innerHTML = `
+    <div class="avatar">${escapeHtml(name[0].toUpperCase())}</div>
+    <p><b>${escapeHtml(name)}: </b>${escapeHtml(msg)}</p>
+  `;
+  return div;
 }
 
 // Загрузка сообщений
 async function load() {
-  try {
-    const r = await fetch(SERVER + "/messages");
-    const data = await r.json();
-    if (!Array.isArray(data)) return;
+  const data = await api("/messages");
+  if (!data) return;
 
-    document.getElementById("chat").innerHTML =
-      data.map(m => `
-        <div class="msg">
-          <b>${escapeHtml(m.name)}:</b> ${escapeHtml(m.msg)}
-        </div>
-      `).join("");
+  const sys = document.querySelector(".msg.system");
 
-      // Авто‑скролл вниз
-    document.getElementById("chat").scrollTop =
-      document.getElementById("chat").scrollHeight;
+  // Если нет сообщений — показываем системную плашку (один раз)
+  if (data.length === 0) {
+    if (!sys) {
+      chat.innerHTML = `
+        <div class="msg system">
+          <p><b>AeroChat: </b>Сообщения появятся здесь.</p>
+        </div>`;
+    }
+    lastCount = 0;
+    return;
+  }
 
-  } catch (e) {}
+  // Если появились сообщения — удаляем системную плашку (один раз)
+  if (sys) sys.remove();
+
+  // Добавляем только новые сообщения
+  if (data.length > lastCount) {
+    const fragment = document.createDocumentFragment();
+    data.slice(lastCount).forEach(m => fragment.appendChild(renderMessage(m)));
+    chat.appendChild(fragment);
+    chat.scrollTop = chat.scrollHeight;
+    lastCount = data.length;
+  }
 }
 
 // Проверка сервера
 async function checkServer() {
-  const statusBox = document.getElementById("server-status");
-  try {
-    const r = await fetch(SERVER + "/messages");
-    if (r.ok) {
-      statusBox.innerHTML = "🟢 Сервер работает";
-      statusBox.style.background = "rgba(0,255,150,0.35)";
-      statusBox.style.boxShadow = "0 0 15px rgba(0,255,150,0.6)";
-    } else {
-      statusBox.innerHTML = "🔴 Сервер не отвечает";
-      statusBox.style.background = "rgba(255,0,0,0.35)";
-      statusBox.style.boxShadow = "0 0 15px rgba(255,0,0,0.6)";
-    }
-  } catch {
-    statusBox.innerHTML = "🔴 Сервер недоступен";
-    statusBox.style.background = "rgba(255,0,0,0.35)";
-    statusBox.style.boxShadow = "0 0 15px rgba(255,0,0,0.6)";
-  }
+  const ok = await api("/messages");
+  const good = ok !== null;
+
+  statusBox.innerHTML = good ? "🟢 Сервер работает" : "🔴 Сервер недоступен";
+  statusBox.style.background = good
+    ? "rgba(0,255,150,0.35)"
+    : "rgba(255,0,0,0.35)";
+  statusBox.style.boxShadow = good
+    ? "0 0 15px rgba(0,255,150,0.6)"
+    : "0 0 15px rgba(255,0,0,0.6)";
 }
 
-// Защита от HTML
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
+// Экранирование HTML
+const escapeHtml = str =>
+  str.replace(/[&<>]/g, t => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[t]));
 
 // Интервалы
 setInterval(load, 1000);
 setInterval(checkServer, 5000);
+
 checkServer();
 load();
 
-// Отправка по Enter
-document.getElementById("msg").addEventListener("keydown", e => {
+// Enter для отправки
+msgEl.addEventListener("keydown", e => {
   if (e.key === "Enter") send();
 });
 </script>
-
 </body>
 </html>
